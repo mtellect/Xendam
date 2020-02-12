@@ -114,99 +114,25 @@ const String FULL_NAME = "fullName";
 const String EMAIL = "email";
 const String USER_ID = "userId";
 const String OBJECT_ID = "objectId";
-
-const String BACKEND_URL = "http://dev-api.moonsandstars.app";
-const String APP_PASSWORD = "moon+stars+20+20";
-const String APP_DATA = "appData";
-const String AUTH_TOKEN = "authToken";
-const String CONFIRMATION_TOKEN = "confirmationToken";
-const String MOON_ID = "moonId";
-const String CONFIRMED = "confirmed";
-
+const String COUNTRY = "country";
+const String COUNTRY_FLAG = "countryFlag";
 const String GENDER = "gender";
-const String DOB = "dateOfBirth";
-const String EDUCATION = "education";
-const String EMPLOYMENT = "employment";
-const String SECT = "sect";
-const String SCHOOL_NAME = "schoolName";
-const String KEY = "key";
-
-const String JOB_TITLE = "jobTitle";
-const String JOB_ROLE = "jobRole";
-
-const String MARITAL_STATUS = "maritalStatus";
-const String HEIGHT = "height";
-const String HAS_CHILDREN = "hasChildren";
-const String WANTS_CHILDREN = "wantsChildren";
-const String YOU_SMOKE = "smoke";
-const String SEX = "sex";
-
-const String DENOMINATION = "denomination";
-const String RELIGIOSITY = "religiosity";
-const String PRAYER_HABIT = "prayerHabit";
-
-const String PROFILE_QUESTIONS_ANSWERS = "profileQuestionAnswers";
-const String USER_PHOTOS = "userPhotos";
+const String BY_ADMIN = "byAdmin";
+const String HAS_RATED = "hasRated";
+const String VISIBILITY = "visibility";
 
 //Local bases
 const String USER_BASE = "userBase";
 const String MATCHED_BASE = "matchedBase";
 const String PREFERENCE_BASE = "preferenceBase";
-
-const String FavoriteAnimation = "assets/flare/Favorite.flr";
-
-//FOR ICONS
-/*const*/ String ic_launcher = "assets/images/ic_launcher.png";
-
-const String maugostImage = "https://tinyurl.com/vfcpohq";
-
-const String notification_icon = "assets/images/notification_icon.png";
-const String post_icon = "assets/images/post_icon.png";
-const String thankyou = "assets/images/thankyou.png";
-const String gifIcon = "assets/images/gifIcon.png";
-const String world = "assets/images/world.png";
-const String like_icon = "assets/images/like_icon.png";
-const String ic_chat = "assets/images/ic_chat.png";
-const String ic_chat2 = "assets/images/ic_chat2.png";
-const String ic_chat1 = "assets/images/ic_chat1.png";
-const String church_icon = "assets/images/church_icon.png";
-const String married_icon = "assets/images/married_icon.png";
-const String single_icon = "assets/images/single_icon.png";
-const String dating_icon = "assets/images/dating_icon.png";
-
-//APP DATABASE COLLECTIONS
-const String REQUEST_BASE = "requestBase";
 const String ADMIN_BASE = "adminBase";
 const String ADMIN_PATH = "maugost@yourTreeApp.com";
 const String REFERENCE_BASE = "referenceBase";
-const String POST_BASE = "postBase";
-const String ACTIVITY_BASE = "activityBase";
-const String STYLE_BASE = "styleBase";
-const String DESIGN_BASE = "designBase";
-const String LIKES_BASE = "likesBase";
-const String COMMENTS_BASE = "commentsBase";
-const String REPLIES_BASE = "repliesBase";
-const String REPORT_BASE = "reportBase";
-const String SUSPEND_BASE = "suspendBase";
-const String SHARES_BASE = "shareBase";
-const String CONNECTION_BASE = "connectionBase";
-const String EVENT_BASE = "eventBase";
-const String CHAT_BASE = "chatBase";
-const String GROUP_BASE = "groupBase";
-const String CHAT_HISTORY_BASE = "chatHistoryBase";
-const String PAYMENT_BASE = "paymentBase";
-const String NOTIFICATION_BASE = "notificationBase";
-const String MUTED = "muted";
-const String COMMENT_MUTED = "commentMuted";
-const String HAS_RATED = "hasRated1";
-const String SILENCED = "slienced";
-const String KICKED_OUT = "kickedOut";
-const String MY_SENT_CHAT = "mySentChat";
-const String BY_ADMIN = "byAdmin";
-const String VISIBILITY = "visibility";
-const String SESSION_BASE = "sessionBase";
-
 const String NOTIFY_BASE = "notifyBase";
+
+//FOR ICONS
+/*const*/ String ic_launcher = "assets/images/ic_launcher.png";
+const String maugostImage = "https://tinyurl.com/vfcpohq";
 
 const int PUBLIC = 0;
 const int PRIVATE = 1;
@@ -292,8 +218,7 @@ const String FREE_SPACE = "freeSpace";
 const String CITY = "city";
 const String STATE = "state";
 const String COUNTRY_COUNT = "countryCount";
-const String COUNTRY = "country";
-const String COUNTRY_FLAG = "countryFlag";
+
 const String RELATIONSHIP_STATUS = "relationStatus";
 const String PHONE_CODE = "phoneCode";
 const String PHONE_COUNTRY = "phoneCountry";

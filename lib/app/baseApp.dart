@@ -7,7 +7,6 @@ export 'HomePop.dart';
 export 'MediaPickerScreen.dart';
 export 'MySeparator.dart';
 export 'NavigationService.dart';
-export 'NotificationHandler.dart';
 export 'PlayVideo.dart';
 export 'PreviewImage.dart';
 export 'PreviewVideo.dart';
