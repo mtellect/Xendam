@@ -1,4 +1,4 @@
-# credpal
+# Xendam
 
 A new Flutter application.
 
