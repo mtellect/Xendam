@@ -1,6 +1,8 @@
+import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:credpal/main_screens/Account.dart';
 import 'package:credpal/main_screens/Ponds.dart';
 import 'package:credpal/rave/RaveApi.dart';
+import 'package:date_format/date_format.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_icons/flutter_icons.dart';
 import 'package:ravepay/ravepay.dart';
@@ -18,8 +20,11 @@ const String NAIRA_SYMBOL = "₦";
 
 List<RaveBanks> raveBanks;
 List<Bank> banks;
-List<AccountBalance> acctBalances;
+List<AccountBalance> acctBalances = List();
+List<BaseModel> mainTransactions = List();
+List<Transactions> recentTransactions = List();
 bool hasSetup = false;
+bool transactionsLoaded = false;
 
 class MainHomePg extends StatefulWidget {
   @override
@@ -45,7 +50,65 @@ class _MainHomePgState extends State<MainHomePg> {
           });
       }
       loadAccountBalances();
+      loadRecentTransactions(false);
+      if (!hasSetup) {}
     });
+  }
+
+  loadRecentTransactions(bool isNew) async {
+    QuerySnapshot shots = await Firestore.instance
+        .collection(TRANSACTION_BASE)
+        .where(USER_ID, isEqualTo: userModel.getObjectId())
+        .orderBy(TIME, descending: !isNew)
+        .limit(15)
+        .startAt([
+      !isNew
+          ? (mainTransactions.isEmpty
+              ? DateTime.now().millisecondsSinceEpoch
+              : mainTransactions[mainTransactions.length - 1].getTime())
+          : (mainTransactions.isEmpty ? 0 : mainTransactions[0].getTime())
+    ]).getDocuments();
+
+    for (DocumentChange changes in shots.documentChanges) {
+      if (changes.type == DocumentChangeType.removed) {
+        changes.document.reference.delete();
+        mainTransactions.removeWhere((bm) =>
+            bm.getObjectId() == BaseModel(doc: changes.document).getObjectId());
+        return;
+      }
+
+      BaseModel model = BaseModel(doc: changes.document);
+
+      bool groupPost = model.getBoolean(IS_GROUP);
+      if (groupPost) continue;
+      int p = mainTransactions
+          .indexWhere((bm) => bm.getObjectId() == model.getObjectId());
+      bool exists = p != -1;
+
+      if (!exists) {
+        if (isNew) {
+          mainTransactions.insert(0, model);
+        } else {
+          mainTransactions.add(model);
+        }
+      } else {
+        mainTransactions[p] = model;
+      }
+
+      if (mounted)
+        setState(() {
+          transactionsLoaded = true;
+          recentTransactions = mainTransactions
+              .map((e) => Transactions(
+                  toAccount: e.getString(TO_ACCOUNT),
+                  transactionRef: e.getString(TRANSACTION_REF),
+                  narration: e.getString(TRANSACTION_NARRATION),
+                  amount: e.getDouble(AMOUNT),
+                  isDebit: e.getBoolean(IS_DEBIT),
+                  date: DateTime.fromMillisecondsSinceEpoch(e.get(TIME))))
+              .toList();
+        });
+    }
   }
 
   loadAccountBalances() {
@@ -247,4 +310,8 @@ class Transactions {
       ..put(TIME, date.millisecondsSinceEpoch);
     return bm.items;
   }
+}
+
+formatTransactionTime(DateTime date) {
+  return formatDate(DateTime.now(), ['M', ' ', 'dd', ',', 'yyyy']);
 }

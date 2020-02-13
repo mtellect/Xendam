@@ -4,6 +4,7 @@ import 'package:credpal/MainHomePg.dart';
 import 'package:credpal/app/AppEngine.dart';
 import 'package:credpal/app/assets.dart';
 import 'package:credpal/app/baseApp.dart';
+import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_icons/flutter_icons.dart';
 
@@ -168,9 +169,14 @@ class _AccountState extends State<Account> {
               title,
               style: textStyle(true, 14, black),
             ),
-            Switch(
+//            Switch(
+//              onChanged: onClicked,
+//              value: active,
+//            )
+            CupertinoSwitch(
               onChanged: onClicked,
               value: active,
+              activeColor: APP_COLOR,
             )
           ],
         ),

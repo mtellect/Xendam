@@ -2,6 +2,7 @@ import 'package:cached_network_image/cached_network_image.dart';
 import 'package:credpal/MainHomePg.dart';
 import 'package:credpal/app/assets.dart';
 import 'package:credpal/auth/AuthSignUp.dart';
+import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
@@ -20,6 +21,7 @@ class _AuthLoginState extends State<AuthLogin> {
   var emailController = TextEditingController();
   var passController = TextEditingController();
   final localAuthentication = LocalAuthentication();
+  var scaffoldKey = GlobalKey<ScaffoldState>();
 
   Future<bool> isBiometricAvailable() async {
     bool isAvailable = false;
@@ -83,6 +85,7 @@ class _AuthLoginState extends State<AuthLogin> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
+      key: scaffoldKey,
       backgroundColor: white,
       body: Stack(
         children: <Widget>[
@@ -184,7 +187,7 @@ class _AuthLoginState extends State<AuthLogin> {
                   padding: EdgeInsets.all(14),
                   child: FlatButton(
                     onPressed: () {
-                      pushAndResult(context, AuthLogin());
+                      authenticateUser();
                     },
                     color: buttonColor,
                     padding: EdgeInsets.all(20),
@@ -262,9 +265,10 @@ class _AuthLoginState extends State<AuthLogin> {
           addSpaceWidth(10),
           Flexible(
             child: CupertinoTextField(
+              controller: controller,
               padding: EdgeInsets.all(18),
               placeholder: hint,
-              obscureText: showPassword,
+              obscureText: showPassword && isPassword,
               suffix: isPassword
                   ? Container(
                       decoration: BoxDecoration(
@@ -291,5 +295,36 @@ class _AuthLoginState extends State<AuthLogin> {
         ],
       ),
     );
+  }
+
+  void authenticateUser() async {
+    String email = emailController.text;
+    String pass = passController.text;
+
+    if (email.isEmpty) {
+      toast(scaffoldKey, "Enter your email address");
+      return;
+    }
+
+    if (pass.isEmpty) {
+      toast(scaffoldKey, "Enter your password");
+      return;
+    }
+    showProgress(true, progressId, context, msg: "Logging In...");
+
+    FirebaseAuth.instance
+        .signInWithEmailAndPassword(email: email, password: pass)
+        .then((value) {
+      popUpWidgetScreenUntil(context, MainHomePg());
+    }).catchError(onError);
+  }
+
+  final progressId = getRandomId();
+
+  onError(e) {
+    showProgress(false, progressId, context);
+    showMessage(
+        context, Icons.error, red, "SignUp Error", "${e.message} ${e.details}",
+        delayInMilli: 1000, cancellable: true);
   }
 }

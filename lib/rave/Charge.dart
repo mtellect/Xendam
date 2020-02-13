@@ -159,7 +159,7 @@ class Charge {
               validatorBuilder}) async {
     String url = '${requestUrl}flwv3-pug/getpaidx/api/charge';
 
-    Map chargeCardPayload = {
+    Map<String, dynamic> payload = {
       "PBFPubKey": pubKey,
       "cardno": cardNumber,
       "cvv": cardCVV,
@@ -177,8 +177,8 @@ class Charge {
       if (pinRequested) "suggested_auth": suggestAuth,
     };
 
-    final encoded = json.encode(chargeCardPayload);
-    final encrypted = encryptPayLoad(encKey, chargeCardPayload);
+    final encrypted = encryptPayLoad(encKey, payload);
+
     final newData = {
       "PBFPubKey": pubKey,
       "client": encrypted,
@@ -193,25 +193,26 @@ class Charge {
     var response = await post(url, body: jsonEncode(newData), headers: headers);
 
     RaveRequest(response).validateRequest(onSuccessful: (msg, data) async {
-      print("charge ${response.body}");
       var chargeResponse = RaveModel(items: data);
       var suggestedAuth = chargeResponse.getString(SUGGESTED_AUTH);
-
       var chargeResponseCode = chargeResponse.getString(CHARGE_RESPONSE_CODE);
       var chargeResponseMsg = chargeResponse.getString(CHARGE_RESPONSE_MESSAGE);
       var flwRef = chargeResponse.getString(FLUTTER_WAVE_REF);
 
+      print("charge resp $data}");
+      //writeToJson(jsonEncode(data), fileName: "chargeResp");
+
       if (suggestedAuth == SUGGESTED_AUTH_PIN) {
-        return validatorBuilder(false, "", "");
+        return validatorBuilder(false, "", flwRef);
       }
 
       if (suggestedAuth == SUGGESTED_AUTH_AVS_VBVSECURECODE) {
         //here should be loading into a url using the redirect url
-        //return validatorBuilder(false, "", "");
+        return validatorBuilder(false, "", flwRef);
       }
 
       if (suggestedAuth == SUGGESTED_AUTH_NOAUTH_INTERNATIONAL) {
-        //return validatorBuilder(false, "", "");
+        return validatorBuilder(false, "", flwRef);
       }
 
       if (chargeResponseCode == CHARGE_RESPONSE_OTP) {
@@ -241,6 +242,8 @@ class Charge {
       "otp": otp
     };
 
+    print("payload $body");
+
     final encoded = json.encode(body);
     bool netCheck = await isConnected();
 
@@ -251,12 +254,15 @@ class Charge {
 
     RaveRequest(response).validateRequest(onSuccessful: (msg, data) async {
       var requestResponse = BaseModel(items: data);
-      var raveValResp = RaveValidationResponse(requestResponse);
+      var acctValResp = RaveAccountValidation(requestResponse);
+      var cardValResp = RaveCardValidation(requestResponse);
+
+      String txRef = isAccount ? acctValResp.txRef : cardValResp.txRef;
+
+      //writeToJson(jsonEncode(data), fileName: "valResp");
 
       return verifyPayment(
-          transactionRef: raveValResp.txRef,
-          onComplete: onComplete,
-          onError: onError);
+          transactionRef: txRef, onComplete: onComplete, onError: onError);
     }, onError: (s) {
       return onError("Validation error $s");
     });
@@ -288,6 +294,7 @@ class Charge {
     RaveRequest(response).validateRequest(onSuccessful: (msg, data) async {
       var chargeData = BaseModel(items: data);
       var verResponse = RavePaymentVerification(chargeData);
+      writeToJson(jsonEncode(data), fileName: "verifyCard");
       print("\n\nverification ${chargeData.items}");
       return onComplete("Payment received!", verResponse);
     }, onError: (s) {
@@ -355,10 +362,10 @@ class Charge {
 
 //START...........................CARD..VALIDATION
 
-class RaveValidationResponse {
+class RaveAccountValidation {
   final BaseModel model;
 
-  RaveValidationResponse(this.model);
+  RaveAccountValidation(this.model);
 
   int get id => model.getInt("id");
   String get txRef => model.getString("txRef");
@@ -406,6 +413,63 @@ class RaveValidationResponse {
 
   RaveChargeTokens get chargeToken =>
       RaveChargeTokens(model.getModel("chargeToken"));
+}
+
+class RaveCardValidation {
+  final BaseModel model;
+
+  RaveCardValidation(this.model);
+
+  String get responseCode => model.getModel("data").getString("responsecode");
+  String get responseMessage =>
+      model.getModel("data").getString("responsemessage");
+
+  int get id => model.getInt("id");
+
+  String get txRef => model.getModel("tx").getString("txRef");
+  String get orderRef => model.getModel("tx").getString("orderref");
+  String get flwRef => model.getModel("tx").getString("flwRef");
+  String get deviceFingerprint =>
+      model.getModel("tx").getString("device_fingerprint");
+  String get settlementToken =>
+      model.getModel("tx").getString("settlement_token");
+  String get cycle => model.getModel("tx").getString("cycle");
+  int get amount => model.getModel("tx").getInt("amount");
+  int get chargedAmount => model.getModel("tx").getInt("charged_amount");
+  int get appFee => model.getModel("tx").getInt("appfee");
+  int get merchantFee => model.getModel("tx").getInt("merchantfee");
+  int get merchantBearsFee => model.getModel("tx").getInt("merchantbearsfee");
+  String get chargeResponseCode =>
+      model.getModel("tx").getString("chargeResponseCode");
+  String get chargeResponseMessage =>
+      model.getModel("tx").getString("chargeResponseMessage");
+  String get authModelUsed => model.getModel("tx").getString("authModelUsed");
+  String get currency => model.getModel("tx").getString("currency");
+  String get ip => model.getModel("tx").getString("IP");
+  String get narration => model.getModel("tx").getString("narration");
+  String get status => model.getModel("tx").getString("status");
+  String get vbvRespMessage => model.getModel("tx").getString("vbvrespmessage");
+  String get authUrl => model.getModel("tx").getString("authurl");
+  String get vbvRespCode => model.getModel("tx").getString("vbvrespcode");
+  String get acctValRespMsg => model.getModel("tx").getString("acctvalrespmsg");
+  String get acctValRespCode =>
+      model.getModel("tx").getString("acctvalrespcode");
+
+  String get paymentType => model.getModel("tx").getString("paymentType");
+  String get paymentId => model.getModel("tx").getString("paymentId");
+  String get fraudStatus => model.getModel("tx").getString("fraud_status");
+  String get chargeType => model.getModel("tx").getString("charge_type");
+  int get isLive => model.getModel("tx").getInt("is_live");
+  String get createdAt => model.getModel("tx").getString("createdAt");
+  String get updatedAt => model.getModel("tx").getString("updatedAt");
+  String get deletedAt => model.getModel("tx").getString("deletedAt");
+
+  int get customerId => model.getModel("tx").getInt("customerId");
+  int get accountId => model.getModel("tx").getInt("AccountId");
+  RaveCardCustomer get customer =>
+      RaveCardCustomer(model.getModel("tx").getModel("customer"));
+  RaveChargeTokens get chargeToken =>
+      RaveChargeTokens(model.getModel("tx").getModel("chargeToken"));
 }
 
 class RaveCardCustomer {

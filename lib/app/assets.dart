@@ -130,7 +130,7 @@ const String COLOR = "color";
 const String SHOW_ACCT_BAL = "showAcctBal";
 const String TITLE = "title";
 const String TRANSACTION_REF = "transactionRef";
-const String TO_ACCOUNT = "isDebit";
+const String TO_ACCOUNT = "toAccount";
 const String IS_DEBIT = "isDebit";
 const String TRANSACTION_NARRATION = "transactionNarration";
 

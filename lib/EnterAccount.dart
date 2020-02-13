@@ -126,6 +126,7 @@ class _EnterAccountState extends State<EnterAccount> {
       .country;
 
   final scaffoldKey = GlobalKey<ScaffoldState>();
+  bool saveBank = false;
 
   @override
   void initState() {
@@ -321,8 +322,43 @@ class _EnterAccountState extends State<EnterAccount> {
               maxLines: 4,
               title: "Message ",
               hint: "Enter a message for this transaction"),
-        ]
+        ],
+        if (widget.type == PayType.ADD)
+          checkViewItem(
+              "Would you want to save this card to be used in the future?",
+              active: saveBank, onClicked: (_) {
+            setState(() {
+              saveBank = _;
+            });
+          })
       ],
+    );
+  }
+
+  checkViewItem(String title, {bool active = false, onClicked}) {
+    return InkWell(
+      onTap: () {
+        onClicked(!active);
+      },
+      child: Container(
+        padding: EdgeInsets.all(16),
+        child: Row(
+          mainAxisAlignment: MainAxisAlignment.spaceBetween,
+          children: <Widget>[
+            Flexible(
+              child: Text(
+                title,
+                style: textStyle(false, 16, black.withOpacity(active ? 1 : .7)),
+              ),
+            ),
+            CupertinoSwitch(
+              onChanged: onClicked,
+              value: active,
+              activeColor: APP_COLOR,
+            )
+          ],
+        ),
+      ),
     );
   }
 

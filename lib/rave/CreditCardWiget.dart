@@ -261,8 +261,8 @@ class _CreditCardWidgetState extends State<CreditCardWidget>
                               Container(
                                   height: 40,
                                   width: 40,
-                                  child:
-                                      Image.asset("assets/images/ic_launcher.png")),
+                                  child: Image.asset(
+                                      "assets/images/ic_launcher.png")),
                             getCardTypeIcon(widget.cardNumber),
                           ],
                         )
@@ -615,7 +615,7 @@ class _CreditCardWidgetState extends State<CreditCardWidget>
     switch (detectCCType(cardNumber)) {
       case CardType.visa:
         icon = Image.asset(
-          'assets/visa.png',
+          'assets/images/visa.png',
           height: 64,
           width: 64,
         );
@@ -624,7 +624,7 @@ class _CreditCardWidgetState extends State<CreditCardWidget>
 
       case CardType.americanExpress:
         icon = Image.asset(
-          'assets/amex.png',
+          'assets/images/amex.png',
           height: 64,
           width: 64,
         );
@@ -633,7 +633,7 @@ class _CreditCardWidgetState extends State<CreditCardWidget>
 
       case CardType.mastercard:
         icon = Image.asset(
-          'assets/mastercard.png',
+          'assets/images/mastercard.png',
           height: 64,
           width: 64,
         );
@@ -642,7 +642,7 @@ class _CreditCardWidgetState extends State<CreditCardWidget>
 
       case CardType.discover:
         icon = Image.asset(
-          'assets/discover.png',
+          'assets/images/discover.png',
           height: 64,
           width: 64,
         );

@@ -348,8 +348,6 @@ class _HomeState extends State<Home> {
     );
   }
 
-  List<Transactions> transactions = [];
-
   transactionItem(Transactions trans) {
     return Container(
       margin: EdgeInsets.all(8),
@@ -395,6 +393,7 @@ class _HomeState extends State<Home> {
               ],
             ),
           ),
+          addSpaceWidth(10),
           Column(
             crossAxisAlignment: CrossAxisAlignment.start,
             mainAxisAlignment: MainAxisAlignment.center,
@@ -405,7 +404,7 @@ class _HomeState extends State<Home> {
               ),
               addSpace(10),
               Text(
-                "", //trans.date,
+                formatTransactionTime(trans.date), //trans.date,
                 style: textStyle(false, 12, black.withOpacity(.6)),
               ),
             ],
@@ -447,8 +446,8 @@ class _HomeState extends State<Home> {
                 ),
               ),
               Column(
-                children: List.generate(transactions.length,
-                    (index) => transactionItem(transactions[index])),
+                children: List.generate(recentTransactions.length,
+                    (index) => transactionItem(recentTransactions[index])),
               )
             ],
           ),

@@ -2,20 +2,25 @@ import 'package:credpal/MainHomePg.dart';
 import 'package:credpal/app/AppEngine.dart';
 import 'package:credpal/app/assets.dart';
 import 'package:credpal/app/baseApp.dart';
+import 'package:credpal/rave/RaveApi.dart';
 import 'package:flutter/material.dart';
 import 'package:virtual_keyboard/virtual_keyboard.dart';
 
 import 'main.dart';
 import 'main_screens/Home.dart';
 
-enum AccessType { OTP, PASSWORD }
+enum AccessType { OTP, PASSWORD, PIN }
+enum ChargeType { BANK, CARD }
 
 class EnterAccess extends StatefulWidget {
   final String title;
   final String narration;
   final String flwRef;
   final AccessType accessType;
+  final ChargeType chargeType;
   final PayType payType;
+  final Function({String cardPin, bool pinRequested, String suggestAuth})
+      chargeCard;
 
   const EnterAccess(
       {Key key,
@@ -23,7 +28,9 @@ class EnterAccess extends StatefulWidget {
       this.accessType = AccessType.OTP,
       this.payType,
       this.narration,
-      this.flwRef})
+      this.flwRef,
+      this.chargeCard,
+      this.chargeType})
       : super(key: key);
   @override
   _EnterAccessState createState() => _EnterAccessState();
@@ -33,8 +40,23 @@ class _EnterAccessState extends State<EnterAccess> {
   String accessCode = '******';
   bool shiftEnabled = false;
 
-  String get titleText =>
-      widget.accessType == AccessType.OTP ? "Enter OTP" : "Enter Password";
+  //String get titleText => accessIsOTP ? "Enter OTP" : "Enter Password";
+
+  bool get chargeIsCard => widget.chargeType == ChargeType.CARD;
+  bool get accessIsOTP => widget.accessType == AccessType.OTP;
+  bool get accessIsPin => widget.accessType == AccessType.PIN;
+
+  String get defCodeFormat => accessIsPin ? "****" : "*****";
+
+  @override
+  void initState() {
+    // TODO: implement initState
+    super.initState();
+    if (mounted)
+      setState(() {
+        accessCode = defCodeFormat;
+      });
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -49,20 +71,27 @@ class _EnterAccessState extends State<EnterAccess> {
           backgroundColor: white,
           iconTheme: IconThemeData(color: black),
           title: Text(
-            titleText,
+            widget.title,
             style: textStyle(true, 20, black),
           ),
           centerTitle: false,
           elevation: 0,
           actions: <Widget>[
-            if (!isEmptyAccess && accessCode.length == 5)
+            if (!isEmptyAccess && accessCode.length == (accessIsPin ? 4 : 5))
               Container(
                 padding: EdgeInsets.all(10),
                 child: FlatButton(
                   onPressed: () {
-                    //Navigator.pop(context, accessCode);
+                    //print("ap $accessIsPin ao $accessIsOTP cc $chargeIsCard");
+                    //return;
+                    if ((accessIsPin || accessIsOTP) && chargeIsCard) {
+                      Navigator.pop(context, accessCode);
+                      return;
+                    }
+
                     if (widget.payType == PayType.ADD) {
-                      fundAccount(accessCode, widget.flwRef);
+                      chargeWithBank(accessCode, widget.flwRef);
+                      return;
                     }
                   },
                   color: orang0,
@@ -84,7 +113,7 @@ class _EnterAccessState extends State<EnterAccess> {
     );
   }
 
-  bool get isEmptyAccess => accessCode == "******";
+  bool get isEmptyAccess => accessCode == defCodeFormat;
 
   payBody() {
     return Column(
@@ -129,7 +158,8 @@ class _EnterAccessState extends State<EnterAccess> {
 
   _onKeyPress(VirtualKeyboardKey key) {
     if (key.keyType == VirtualKeyboardKeyType.String) {
-      if (accessCode.length == 5 && !isEmptyAccess) return;
+      if ((accessCode.length == (accessIsPin ? 4 : 5)) && !isEmptyAccess)
+        return;
       if (isEmptyAccess) {
         accessCode = (shiftEnabled ? key.capsText : key.text);
       } else {
@@ -138,13 +168,11 @@ class _EnterAccessState extends State<EnterAccess> {
     } else if (key.keyType == VirtualKeyboardKeyType.Action) {
       switch (key.action) {
         case VirtualKeyboardKeyAction.Backspace:
-          //print(text.length);
           if (accessCode.length == 1 || isEmptyAccess || accessCode.isEmpty) {
-            accessCode = "******";
+            accessCode = defCodeFormat;
           } else {
             accessCode = accessCode.substring(0, accessCode.length - 1);
           }
-
           break;
         case VirtualKeyboardKeyAction.Return:
           accessCode = accessCode + '\n';
@@ -158,58 +186,18 @@ class _EnterAccessState extends State<EnterAccess> {
         default:
       }
     }
-    setState(() {
-      print("setting state");
-    });
+    setState(() {});
   }
 
   final progressId = getRandomId();
 
-  fundAccount(String otp, String flwRef) {
+  chargeWithBank(String otp, String flwRef, {bool isAccount = false}) {
     showProgress(true, progressId, context, msg: "Funding Account...");
     raveApi.charge.validatePayment(
         isAccount: true,
         transactionRef: flwRef,
         otp: otp,
-        onComplete: (msg, resp) {
-          final transMap = Transactions(
-                  transactionRef: resp.txRef,
-                  toAccount: "Xendam Wallet Credited",
-                  narration: widget.narration,
-                  amount: resp.amount.toDouble(),
-                  isDebit: false,
-                  date: DateTime.now())
-              .toModel();
-
-          BaseModel transModel = BaseModel(items: transMap);
-          transModel.saveItem(TRANSACTION_BASE, true, document: resp.txRef,
-              onComplete: () {
-            showProgress(false, progressId, context);
-
-            print("msg $msg tok ${resp.model.items}");
-            int p = acctBalances
-                .indexWhere((element) => element.title == "Total Savings");
-            acctBalances[p].amount =
-                acctBalances[p].amount + resp.amount.toDouble();
-            userModel
-              ..put(ACCOUNT_BALANCES,
-                  acctBalances.map((e) => e.toModel()).toList())
-              ..updateItems();
-
-            showMessage(
-                context,
-                Icons.check,
-                green_dark,
-                "Transaction Successful",
-                "Your xendam account has successfully been funded",
-                delayInMilli: 900,
-                cancellable: false, onClicked: (_) {
-              Navigator.of(context).popUntil((route) => route.isFirst);
-            });
-          });
-          return;
-          Future.delayed(Duration(milliseconds: 900), () {});
-        },
+        onComplete: saveTransaction,
         onError: (e) {
           showProgress(false, progressId, context);
           showMessage(context, Icons.error, red, "Charge Error", e,
@@ -217,5 +205,36 @@ class _EnterAccessState extends State<EnterAccess> {
             Navigator.of(context).popUntil((route) => route.isFirst);
           });
         });
+  }
+
+  void saveTransaction(String msg, RavePaymentVerification resp) {
+    final transMap = Transactions(
+            transactionRef: resp.txRef,
+            toAccount: "Xendam wallet credited",
+            narration: "You funded your account from your bank account",
+            amount: resp.amount.toDouble(),
+            isDebit: false,
+            date: DateTime.now())
+        .toModel();
+
+    BaseModel transModel = BaseModel(items: transMap);
+    transModel.saveItem(TRANSACTION_BASE, true, document: resp.txRef,
+        onComplete: () {
+      showProgress(false, progressId, context);
+
+      print("msg $msg tok ${resp.model.items}");
+      int p = acctBalances
+          .indexWhere((element) => element.title == "Total Savings");
+      acctBalances[p].amount = acctBalances[p].amount + resp.amount.toDouble();
+      userModel
+        ..put(ACCOUNT_BALANCES, acctBalances.map((e) => e.toModel()).toList())
+        ..updateItems();
+
+      showMessage(context, Icons.check, green_dark, "Transaction Successful",
+          "Your xendam account has successfully been funded",
+          delayInMilli: 900, cancellable: false, onClicked: (_) {
+        Navigator.of(context).popUntil((route) => route.isFirst);
+      });
+    });
   }
 }
