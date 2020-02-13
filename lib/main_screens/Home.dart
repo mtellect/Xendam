@@ -9,10 +9,11 @@ import 'package:credpal/app/baseApp.dart';
 import 'package:enum_to_string/enum_to_string.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/widgets.dart';
-import 'package:flutter_icons/flutter_icons.dart';
 import 'package:time_machine/time_machine.dart';
 
 enum PayType { ADD, SEND, WITHDRAW, BILLS, CARD }
+enum BalanceType { SAVINGS, PONDS, TRANSFERS, WITHDRAWS }
+enum TransactionType { CREDIT, DEBIT }
 
 class Home extends StatefulWidget {
   @override
@@ -26,8 +27,7 @@ class _HomeState extends State<Home> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      //backgroundColor: white,
-      body: pageBody(),
+      body: hasSetup ? pageBody() : loadingLayout(),
     );
   }
 
@@ -97,28 +97,6 @@ class _HomeState extends State<Home> {
     );
   }
 
-  List<AccountBalances> acctBalances = [
-    AccountBalances(
-        title: "Total Savings",
-        amount: "145,000",
-        icon: SimpleLineIcons.wallet),
-    AccountBalances(
-        title: "Total Ponds",
-        amount: "105,000",
-        icon: AntDesign.rocket1,
-        color: plinkdColor),
-    AccountBalances(
-        title: "Total Transfers",
-        amount: "15,000",
-        icon: AntDesign.bank,
-        color: red),
-    AccountBalances(
-        title: "Total Withdraws",
-        amount: "25,000",
-        icon: AntDesign.fork,
-        color: blue),
-  ];
-
   accountBalances() {
     return Column(
       children: <Widget>[
@@ -166,7 +144,8 @@ class _HomeState extends State<Home> {
   }
 
   balanceItem(int p) {
-    AccountBalances bal = acctBalances[p];
+    AccountBalance bal = acctBalances[p];
+    bool showBal = userModel.getBoolean(SHOW_ACCT_BAL);
     return ClipRRect(
       borderRadius: BorderRadius.only(
         topLeft: Radius.circular(18),
@@ -221,7 +200,7 @@ class _HomeState extends State<Home> {
                       ),
                       addSpace(5),
                       Text(
-                        "$NAIRA_SYMBOL${bal.amount}",
+                        showBal ? "$NAIRA_SYMBOL${bal.amount}" : "****",
                         style: textStyle(true, 20, white),
                       ),
                     ],
@@ -238,7 +217,7 @@ class _HomeState extends State<Home> {
   List<BaseModel> payData = [
     BaseModel()
       ..put(TYPE, EnumToString.parse(PayType.ADD))
-      ..put(COLORS, Colors.purple.value)
+      ..put(COLOR, Colors.purple.value)
       ..put(IMAGE, "assets/images/fund.png")
       ..put(TITLE, "Add Money")
       ..put(VALUE, "Into your xendam account"),
@@ -254,7 +233,7 @@ class _HomeState extends State<Home> {
       ..put(VALUE, "Directly into a local bank account"),
     BaseModel()
       ..put(TYPE, EnumToString.parse(PayType.BILLS))
-      ..put(COLORS, Colors.green.value)
+      ..put(COLOR, Colors.green.value)
       ..put(IMAGE, "assets/images/bills.png")
       ..put(TITLE, "Pay Bills")
       ..put(VALUE, "Airtime & Cable TV")
@@ -262,7 +241,7 @@ class _HomeState extends State<Home> {
 
   payItem(int p, {bool active = false, onSelected}) {
     BaseModel bm = payData[p];
-    Color color = Color(bm.getInt(COLORS));
+    Color color = Color(bm.getInt(COLOR));
     String title = bm.getString(TITLE);
     String value = bm.getString(VALUE);
     String icon = bm.getImage();
@@ -369,57 +348,7 @@ class _HomeState extends State<Home> {
     );
   }
 
-  List<Transactions> transactions = [
-    Transactions(
-        toAccount: "Terry Kerrangar",
-        narration: "Payment for Moon Milestone",
-        amount: "300,000.00",
-        isDebit: false,
-        color: null,
-        date: "Jan 19,2019"),
-    Transactions(
-        toAccount: "Stella Aniugbo",
-        narration: "Payment for Moon Milestone",
-        amount: "3,000.00",
-        isDebit: true,
-        color: null,
-        date: "Jan 19,2019"),
-    Transactions(
-        toAccount: "John Okore",
-        narration: "Payment for Fb Milestone",
-        amount: "15,0000.00",
-        isDebit: false,
-        color: null,
-        date: "Jan 19,2019"),
-    Transactions(
-        toAccount: "Nkechi Aniugbo",
-        narration: "Payment for Moon Milestone",
-        amount: "3000.00",
-        isDebit: true,
-        color: null,
-        date: "Jan 19,2019"),
-    Transactions(
-        toAccount: "Nkechi Aniugbo",
-        narration: "Payment for Moon Milestone",
-        amount: "300.00",
-        isDebit: false,
-        color: null,
-        date: "Jan 19,2019"),
-    Transactions(
-        toAccount: "Nkechi Aniugbo",
-        narration: "Payment for Moon Milestone",
-        amount: "300.00",
-        isDebit: true,
-        color: null,
-        date: "Jan 19,2019"),
-    Transactions(
-        toAccount: "Nkechi Aniugbo",
-        narration: "Payment for Moon Milestone",
-        amount: "300.00",
-        isDebit: false,
-        color: null,
-        date: "Jan 19,2019"),
-  ];
+  List<Transactions> transactions = [];
 
   transactionItem(Transactions trans) {
     return Container(
@@ -476,7 +405,7 @@ class _HomeState extends State<Home> {
               ),
               addSpace(10),
               Text(
-                trans.date,
+                "", //trans.date,
                 style: textStyle(false, 12, black.withOpacity(.6)),
               ),
             ],
@@ -527,49 +456,4 @@ class _HomeState extends State<Home> {
       ],
     );
   }
-}
-
-class AccountBalances {
-  final String title;
-  final String amount;
-  final IconData icon;
-  final Color color;
-
-  AccountBalances(
-      {@required this.title,
-      @required this.amount,
-      @required this.icon,
-      this.color = APP_COLOR});
-}
-
-class HomeBills {
-  final String title;
-  final String subTitle;
-  final List<String> images;
-
-  final Color color;
-
-  HomeBills({
-    @required this.title,
-    @required this.subTitle,
-    @required this.images,
-    @required this.color,
-  });
-}
-
-class Transactions {
-  final String toAccount;
-  final String narration;
-  final String amount;
-  final String date;
-  final isDebit;
-  final Color color;
-
-  Transactions(
-      {@required this.toAccount,
-      @required this.narration,
-      @required this.amount,
-      @required this.isDebit,
-      @required this.date,
-      @required this.color});
 }

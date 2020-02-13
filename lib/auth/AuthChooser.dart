@@ -17,18 +17,18 @@ class _AuthChooserState extends State<AuthChooser> {
 
   List<BaseModel> chooser = [
     BaseModel()
-      ..put(COLORS, Color(0xFF1C68EC))
+      ..put(COLOR, Color(0xFF1C68EC))
       ..put(IMAGE_PATH, FontAwesome.user_o)
       ..put(TITLE, "Customer")
       ..put(VALUE, "Make purchases and pay over time"),
     BaseModel()
-      ..put(COLORS, Color(0xFF17A2B8))
+      ..put(COLOR, Color(0xFF17A2B8))
       ..put(IMAGE_PATH, FontAwesome.shopping_cart)
       ..put(TITLE, "Retailer/Merchant")
       ..put(VALUE,
           "For merchants looking to provide credit option for their customers"),
     BaseModel()
-      ..put(COLORS, Color(0xFF6F42C1))
+      ..put(COLOR, Color(0xFF6F42C1))
       ..put(IMAGE_PATH, FontAwesome.bank)
       ..put(TITLE, "Financial Institution")
       ..put(VALUE,
@@ -96,7 +96,7 @@ class _AuthChooserState extends State<AuthChooser> {
                   String title = bm.getString(TITLE);
                   String value = bm.getString(VALUE);
                   IconData icon = bm.get(IMAGE_PATH);
-                  Color color = bm.get(COLORS);
+                  Color color = bm.get(COLOR);
                   bool active = activeChosen == p;
                   return GestureDetector(
                     onTap: () {

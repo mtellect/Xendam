@@ -270,8 +270,12 @@ class BaseModel {
           .document(document)
           .setData(items)
           .then((_) {
-        onComplete();
-      }, onError: onError).catchError(onError);
+        if (null != onComplete) onComplete();
+      }, onError: (e) {
+        if (null != onError) onError(e);
+      }).catchError((e) {
+        if (null != onError) onError(e);
+      });
     }
   }
 
@@ -293,7 +297,7 @@ class BaseModel {
   }
 
   void addMyDetails() {
-    items[USER_ID] = userModel.getUserId();
+    items[USER_ID] = userModel.getObjectId();
     items[IMAGE] = userModel.getString(IMAGE);
     items[FULL_NAME] = userModel.getString(FULL_NAME);
     items[BY_ADMIN] = userModel.isAdminItem();

@@ -16,7 +16,7 @@ class SendMoney extends StatefulWidget {
 class _SendMoneyState extends State<SendMoney> {
   List<BaseModel> data = [
     BaseModel()
-      ..put(COLORS, [
+      ..put(COLOR, [
         Color(0xFFFB72AD).value,
         Color(0xFFB643D5).value,
       ])
@@ -24,7 +24,7 @@ class _SendMoneyState extends State<SendMoney> {
       ..put(DESCRIPTION, "Send money to a designated bank account")
       ..put(IMAGE, "assets/images/bank.png"),
     BaseModel()
-      ..put(COLORS, [
+      ..put(COLOR, [
         blue3.value,
         blue03.value,
       ])
@@ -32,7 +32,7 @@ class _SendMoneyState extends State<SendMoney> {
       ..put(DESCRIPTION, "Send money into a mobile money account")
       ..put(IMAGE, "assets/images/mobile_money.png"),
     BaseModel()
-      ..put(COLORS, [
+      ..put(COLOR, [
         Color(0xFFEB3349).value,
         Color(0xFFFD8976).value,
       ])
@@ -74,7 +74,7 @@ class _SendMoneyState extends State<SendMoney> {
           String title = sendTo.getString(TITLE);
           String desc = sendTo.getString(DESCRIPTION);
           List<Color> colors =
-              sendTo.getList(COLORS).map((c) => Color(c)).toList();
+              sendTo.getList(COLOR).map((c) => Color(c)).toList();
           return GestureDetector(
             onTap: () {
               pushAndResult(

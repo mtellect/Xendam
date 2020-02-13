@@ -5,11 +5,13 @@ import 'package:cached_network_image/cached_network_image.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:connectivity/connectivity.dart';
 import 'package:credpal/dialogs/baseDialogs.dart';
+import 'package:credpal/rave/RaveApi.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:firebase_storage/firebase_storage.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/rendering.dart';
 import 'package:flutter/services.dart';
+import 'package:flutter_icons/flutter_icons.dart';
 import 'package:flutter_local_notifications/flutter_local_notifications.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
 import 'package:image_picker/image_picker.dart';
@@ -716,7 +718,7 @@ pushAndResult(context, item, {result}) {
             return item;
           })).then((_) {
     if (_ != null) {
-      if (result != null) result(_);
+      if (null!=result) result(_);
     }
   });
 }
@@ -833,6 +835,34 @@ createBasicListeners({bool suspend = false, setUpMethods, redirectBack}) async {
 
       userModel = BaseModel(doc: shot);
       isAdmin = userModel.isMaugost() || userModel.getBoolean(IS_ADMIN);
+      List accountBalances = userModel.getList(ACCOUNT_BALANCES);
+      if (accountBalances.isEmpty) {
+        accountBalances = [
+          createAccountBalance(
+              title: "Total Savings",
+              amount: 0.00,
+              icon: SimpleLineIcons.wallet,
+              color: APP_COLOR),
+          createAccountBalance(
+              title: "Total Ponds",
+              amount: 0.00,
+              icon: AntDesign.rocket1,
+              color: plinkdColor),
+          createAccountBalance(
+              title: "Total Transfers",
+              amount: 0.00,
+              icon: AntDesign.bank,
+              color: red),
+          createAccountBalance(
+              title: "Total Withdraws",
+              amount: 0.00,
+              icon: AntDesign.fork,
+              color: blue),
+        ];
+        userModel
+          ..put(ACCOUNT_BALANCES, accountBalances)
+          ..updateItems();
+      }
       print("requesting ===> setUpMethods()");
       setUpMethods();
     });
@@ -1841,4 +1871,28 @@ tipMessageItem(String title, String message, {Color color = red03}) {
           ),
         )),
   );
+}
+
+createAccountBalance(
+    {@required String title,
+    @required double amount,
+    @required IconData icon,
+    @required Color color}) {
+  BaseModel bm = BaseModel();
+  bm
+    ..put(TITLE, title)
+    ..put(AMOUNT, amount)
+    ..put(ICON, icon.codePoint)
+    ..put(ICON_FONT, icon.fontFamily)
+    ..put(ICON_FONT_PACKAGE, icon.fontPackage)
+    ..put(ICON_DIRECTION, icon.matchTextDirection)
+    ..put(COLOR, color.value);
+  return bm.items;
+}
+
+writeToJson(String text,{String fileName="fileName"}) async {
+  final Directory directory = await getApplicationDocumentsDirectory();
+  final File file = File('${directory.path}/$fileName.json');
+  await file.writeAsString(text);
+  print(file.path);
 }

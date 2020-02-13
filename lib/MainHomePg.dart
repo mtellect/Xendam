@@ -18,6 +18,8 @@ const String NAIRA_SYMBOL = "₦";
 
 List<RaveBanks> raveBanks;
 List<Bank> banks;
+List<AccountBalance> acctBalances;
+bool hasSetup = false;
 
 class MainHomePg extends StatefulWidget {
   @override
@@ -33,11 +35,32 @@ class _MainHomePgState extends State<MainHomePg> {
     // TODO: implement initState
     super.initState();
     loadAvailableBanks();
-    createBasicListeners(
-        redirectBack: () {
-          popUpWidgetScreenUntil(context, Landing());
-        },
-        setUpMethods: () {});
+    createBasicListeners(redirectBack: () {
+      popUpWidgetScreenUntil(context, Landing());
+    }, setUpMethods: () {
+      if (!hasSetup) {
+        if (mounted)
+          setState(() {
+            hasSetup = !hasSetup;
+          });
+      }
+      loadAccountBalances();
+    });
+  }
+
+  loadAccountBalances() {
+    acctBalances = userModel.getList(ACCOUNT_BALANCES).map((e) {
+      BaseModel bm = BaseModel(items: e);
+      return AccountBalance(
+          title: bm.getString(TITLE),
+          amount: bm.getDouble(AMOUNT),
+          icon: IconData(bm.get(ICON),
+              fontFamily: bm.get(ICON_FONT),
+              fontPackage: bm.get(ICON_FONT_PACKAGE),
+              matchTextDirection: bm.get(ICON_DIRECTION)),
+          color: Color(bm.get(COLOR)));
+    }).toList();
+    if (mounted) setState(() {});
   }
 
   loadAvailableBanks() async {
@@ -167,4 +190,61 @@ class HomeTab {
   final Color color;
 
   HomeTab({@required this.icon, @required this.title, this.color = APP_COLOR});
+}
+
+class AccountBalance {
+  String title;
+  double amount;
+  IconData icon;
+  Color color;
+
+  AccountBalance(
+      {@required this.title,
+      @required this.amount,
+      @required this.icon,
+      this.color = APP_COLOR});
+
+  Map<String, Object> toModel() {
+    BaseModel bm = BaseModel();
+    bm
+      ..put(TITLE, title)
+      ..put(AMOUNT, amount)
+      ..put(ICON, icon.codePoint)
+      ..put(ICON_FONT, icon.fontFamily)
+      ..put(ICON_FONT_PACKAGE, icon.fontPackage)
+      ..put(ICON_DIRECTION, icon.matchTextDirection)
+      ..put(COLOR, color.value);
+    return bm.items;
+  }
+}
+
+class Transactions {
+  final String transactionRef;
+  final String toAccount;
+  final String narration;
+  final double amount;
+  final DateTime date;
+  final isDebit;
+
+  Transactions({
+    @required this.toAccount,
+    @required this.transactionRef,
+    @required this.narration,
+    @required this.amount,
+    @required this.isDebit,
+    @required this.date,
+  });
+
+  Map<String, Object> toModel() {
+    BaseModel bm = BaseModel();
+    bm
+      ..put(TRANSACTION_REF, transactionRef)
+      ..put(TO_ACCOUNT, toAccount)
+      ..put(AMOUNT, amount)
+      ..put(TRANSACTION_NARRATION, narration)
+      ..put(IS_DEBIT, isDebit)
+      ..put(AMOUNT, amount)
+      ..put(TIME, date.millisecondsSinceEpoch);
+    return bm.items;
+  }
 }

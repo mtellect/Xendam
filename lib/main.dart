@@ -9,7 +9,7 @@ import 'app/navigationUtils.dart';
 import 'rave/RaveApi.dart';
 
 var raveApi = RaveApi(
-    liveMode: true,
+    liveMode: false,
     liveEncKey: "fd4172f2b7fc4ea54666c712",
     testEncKey: "fd4172f2b7fc4ea54666c712",
     liveSecKey: "FLWSECK-d8cb090bc6edeb52da7a5772cbbe8f29-X",

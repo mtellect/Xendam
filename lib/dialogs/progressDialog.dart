@@ -79,7 +79,8 @@ class _progressDialogState extends State<progressDialog> {
 
     return GestureDetector(
       onTap: () {
-        if (cancelable) Navigator.pop(context);
+        //if (cancelable)
+        Navigator.pop(context);
       },
       child: WillPopScope(
         child: Stack(fit: StackFit.expand, children: <Widget>[

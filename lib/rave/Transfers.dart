@@ -48,13 +48,13 @@ class Transfers {
 
     if (!netCheck) return onError("Failed to connect to internet");
 
-    var response = await post(url, body: jsonEncode(body), headers: headers);
-
-    RaveRequest(response).validateRequest(
-        onSuccessful: (msg, data) {
-          return onComplete(RaveTransfer(RaveModel(items: data)));
-        },
-        onError: onError);
+    post(url, body: jsonEncode(body), headers: headers).then((value) {
+      RaveRequest(value).validateRequest(
+          onSuccessful: (msg, data) {
+            return onComplete(RaveTransfer(RaveModel(items: data)));
+          },
+          onError: onError);
+    }).catchError(onError);
   }
 
   transferToAbroad(
@@ -114,13 +114,17 @@ class Transfers {
     if (!netCheck) {
       return onError("Failed to connect to internet");
     }
-    var response = await post(url, body: jsonEncode(body), headers: headers);
 
-    RaveRequest(response).validateRequest(
-        onSuccessful: (msg, data) {
-          return onComplete(RaveTransfer(RaveModel(items: data)));
-        },
-        onError: onError);
+    post(url, body: jsonEncode(body), headers: headers)
+        .then((value) {
+      RaveRequest(value).validateRequest(
+          onSuccessful: (msg, data) {
+            return onComplete(RaveTransfer(RaveModel(items: data)));
+          },
+          onError: onError);
+        }).catchError(onError);
+
+
   }
 
   transferToMpesaMobile(
@@ -153,13 +157,16 @@ class Transfers {
     if (!netCheck) {
       return onError("Failed to connect to internet");
     }
-    var response = await post(url, body: jsonEncode(body), headers: headers);
 
-    RaveRequest(response).validateRequest(
-        onSuccessful: (msg, data) {
-          return onComplete(RaveTransfer(RaveModel(items: data)));
-        },
-        onError: onError);
+    post(url, body: jsonEncode(body), headers: headers).then((value) {
+      RaveRequest(value).validateRequest(
+          onSuccessful: (msg, data) {
+            return onComplete(RaveTransfer(RaveModel(items: data)));
+          },
+          onError: onError);
+    }).catchError(onError);
+
+
   }
 
   transferToGhanaMobile(

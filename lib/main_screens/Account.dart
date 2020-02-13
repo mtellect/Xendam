@@ -15,6 +15,7 @@ class Account extends StatefulWidget {
 class _AccountState extends State<Account> {
   int currentPage = 0;
   final vp = PageController();
+  bool showAccountBalance = userModel.getBoolean(SHOW_ACCT_BAL);
 
   @override
   Widget build(BuildContext context) {
@@ -116,7 +117,15 @@ class _AccountState extends State<Account> {
         padding: EdgeInsets.all(0),
         children: <Widget>[
           checkViewItem("Enable Finger Print/Face.ID", onClicked: (b) {}),
-          checkViewItem("Show Dashboard Account Balances", onClicked: (b) {}),
+          checkViewItem("Show Dashboard Account Balances",
+              active: showAccountBalance, onClicked: (b) {
+            setState(() {
+              showAccountBalance = !showAccountBalance;
+            });
+            userModel
+              ..put(SHOW_ACCT_BAL, showAccountBalance)
+              ..updateItems();
+          }),
           Column(
             children: List.generate(accountViews.length, (p) {
               return accountItem(p, onClicked: (_) {

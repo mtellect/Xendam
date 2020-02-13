@@ -15,7 +15,7 @@ class AddMoney extends StatefulWidget {
 class _AddMoneyState extends State<AddMoney> {
   List<BaseModel> data = [
     BaseModel()
-      ..put(COLORS, [
+      ..put(COLOR, [
         Color(0xFFFB72AD).value,
         Color(0xFFB643D5).value,
       ])
@@ -24,7 +24,7 @@ class _AddMoneyState extends State<AddMoney> {
           "Add funds into your Xendam wallet directly from your Bank Account")
       ..put(IMAGE, "assets/images/bank.png"),
     BaseModel()
-      ..put(COLORS, [
+      ..put(COLOR, [
         blue3.value,
         blue03.value,
       ])
@@ -67,7 +67,7 @@ class _AddMoneyState extends State<AddMoney> {
           String title = sendTo.getString(TITLE);
           String desc = sendTo.getString(DESCRIPTION);
           List<Color> colors =
-              sendTo.getList(COLORS).map((c) => Color(c)).toList();
+              sendTo.getList(COLOR).map((c) => Color(c)).toList();
           return GestureDetector(
             onTap: () {
               pushAndResult(

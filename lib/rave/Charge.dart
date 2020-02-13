@@ -30,8 +30,6 @@ class Charge {
 
   initiateBankPayment(
       {@required
-          BuildContext context,
-      @required
           String bankCode,
       @required
           String accountNumber,
@@ -51,9 +49,6 @@ class Charge {
           String lastName,
       @required
           String txReference,
-      String suggestAuth = "PIN",
-      String cardPin,
-      bool pinRequested = false,
       @required
           Function(String) onComplete,
       @required
@@ -96,10 +91,8 @@ class Charge {
     var response = await post(url, body: jsonEncode(newData), headers: headers);
 
     RaveRequest(response).validateRequest(onSuccessful: (msg, data) async {
-      print("charge ${response.body}");
       var chargeResponse = RaveModel(items: data);
       var suggestedAuth = chargeResponse.getString(SUGGESTED_AUTH);
-
       var chargeResponseCode = chargeResponse.getString(CHARGE_RESPONSE_CODE);
       var chargeResponseMsg = chargeResponse.getString(CHARGE_RESPONSE_MESSAGE);
       var flwRef = chargeResponse.getString(FLUTTER_WAVE_REF);
@@ -110,11 +103,11 @@ class Charge {
 
       if (suggestedAuth == SUGGESTED_AUTH_AVS_VBVSECURECODE) {
         //here should be loading into a url using the redirect url
-        //return validatorBuilder(false, "", "");
+        return validatorBuilder(false, "", "");
       }
 
       if (suggestedAuth == SUGGESTED_AUTH_NOAUTH_INTERNATIONAL) {
-        //return validatorBuilder(false, "", "");
+        return validatorBuilder(false, "", "");
       }
 
       if (chargeResponseCode == CHARGE_RESPONSE_OTP) {
@@ -232,15 +225,19 @@ class Charge {
   }
 
   validatePayment(
-      {@required String transactionRef,
+      {bool isAccount = false,
+      @required String transactionRef,
       @required String otp,
-      @required Function(String msg, String token) onComplete,
+      @required Function(String msg, RavePaymentVerification resp) onComplete,
       @required Function(String) onError}) async {
-    String url = '${requestUrl}flwv3-pug/getpaidx/api/validatecharge';
+    String endPoint = isAccount ? "validate" : "validatecharge";
+    String reference =
+        isAccount ? "transactionreference" : "transaction_reference";
+    String url = '${requestUrl}flwv3-pug/getpaidx/api/$endPoint';
 
     Map<String, String> body = {
       "PBFPubKey": pubKey,
-      "transaction_reference": transactionRef,
+      reference: transactionRef,
       "otp": otp
     };
 
@@ -254,19 +251,12 @@ class Charge {
 
     RaveRequest(response).validateRequest(onSuccessful: (msg, data) async {
       var requestResponse = BaseModel(items: data);
-      var raveValResp = RaveCardValidationResponse(requestResponse);
-      print("\n\n validation ${requestResponse.items}");
-      print("check...${requestResponse.getModel("data").items}");
-      print("check code...${raveValResp.responseCode}");
-      print("check txref ...${raveValResp.txRef}");
-      if (raveValResp.responseCode == RESPONSE_CODE_APPROVED) {
-        //validated charge of rave backend
-        return verifyPayment(
-            transactionRef: raveValResp.txRef,
-            onComplete: onComplete,
-            onError: onError);
-      }
-      return onError("Validation error ${raveValResp.responseMessage}");
+      var raveValResp = RaveValidationResponse(requestResponse);
+
+      return verifyPayment(
+          transactionRef: raveValResp.txRef,
+          onComplete: onComplete,
+          onError: onError);
     }, onError: (s) {
       return onError("Validation error $s");
     });
@@ -274,9 +264,12 @@ class Charge {
 
   verifyPayment(
       {bool tokenVerification = false,
-      @required String transactionRef,
-      @required Function(String msg, String token) onComplete,
-      @required Function(String) onError}) async {
+      @required
+          String transactionRef,
+      @required
+          Function(String msg, RavePaymentVerification response) onComplete,
+      @required
+          Function(String) onError}) async {
     String url = '${requestUrl}flwv3-pug/getpaidx/api/v2/verify';
 
     Map<String, String> body = {
@@ -294,11 +287,9 @@ class Charge {
 
     RaveRequest(response).validateRequest(onSuccessful: (msg, data) async {
       var chargeData = BaseModel(items: data);
-      var verificationResp = RavePaymentVerification(chargeData);
+      var verResponse = RavePaymentVerification(chargeData);
       print("\n\nverification ${chargeData.items}");
-
-      return onComplete("Payment received!",
-          verificationResp.raveChargedCard.cardTokens[0].embedToken);
+      return onComplete("Payment received!", verResponse);
     }, onError: (s) {
       onError("Verification error $s");
     });
@@ -313,7 +304,7 @@ class Charge {
       @required String email,
       @required String country,
       @required int amount,
-      @required Function(String msg, String token) onComplete,
+      @required Function(String msg, RavePaymentVerification resp) onComplete,
       @required Function(String) onError}) async {
     String url = '${requestUrl}flwv3-pug/getpaidx/api/tokenized/charge';
 
@@ -363,61 +354,58 @@ class Charge {
 }
 
 //START...........................CARD..VALIDATION
-class RaveCardValidationResponse {
+
+class RaveValidationResponse {
   final BaseModel model;
 
-  RaveCardValidationResponse(this.model);
-
-  String get responseCode => model.getModel("data").getString("responsecode");
-  String get responseMessage =>
-      model.getModel("data").getString("responsemessage");
+  RaveValidationResponse(this.model);
 
   int get id => model.getInt("id");
+  String get txRef => model.getString("txRef");
+  String get orderRef => model.getString("orderRef");
+  String get flwRef => model.getString("flwRef");
+  String get redirectUrl => model.getString("redirectUrl");
+  String get deviceFingerprint => model.getString("device_fingerprint");
+  String get settlementToken => model.getString("settlement_token");
+  String get cycle => model.getString("cycle");
+  get amount => model.get("amount");
+  get chargedAmount => model.get("charged_amount");
+  get appFee => model.get("appfee");
+  get merchantFee => model.get("merchantfee");
+  get merchantBearsFee => model.get("merchantbearsfee");
+  String get chargeResponseCode => model.getString("chargeResponseCode");
+  String get raveRef => model.getString("raveRef");
+  String get chargeResponseMessage => model.getString("chargeResponseMessage");
+  String get authModelUsed => model.getString("authModelUsed");
+  String get narration => model.getString("narration");
+  String get status => model.getString("status");
+  String get modalAuditId => model.getString("modalauditid");
+  String get vbvRespMessage => model.getString("vbvrespmessage");
+  String get authUrl => model.getString("authurl");
+  String get vbvRespCode => model.getString("vbvrespcode");
+  String get paymentType => model.getString("paymentType");
+  String get paymentPlan => model.getString("paymentPlan");
+  String get paymentPage => model.getString("paymentPage");
+  String get paymentId => model.getString("paymentId");
+  String get fraudStatus => model.getString("fraud_status");
+  String get chargeType => model.getString("charge_type");
+  int get isLive => model.getInt("is_live");
+  get retryAttempt => model.get("retry_attempt");
+  get getPaidBatchId => model.get("getpaidBatchId");
 
-  String get txRef => model.getModel("tx").getString("txRef");
-  String get orderRef => model.getModel("tx").getString("orderref");
-  String get flwRef => model.getModel("tx").getString("flwRef");
-  String get deviceFingerprint =>
-      model.getModel("tx").getString("device_fingerprint");
-  String get settlementToken =>
-      model.getModel("tx").getString("settlement_token");
-  String get cycle => model.getModel("tx").getString("cycle");
-  int get amount => model.getModel("tx").getInt("amount");
-  int get chargedAmount => model.getModel("tx").getInt("charged_amount");
-  int get appFee => model.getModel("tx").getInt("appfee");
-  int get merchantFee => model.getModel("tx").getInt("merchantfee");
-  int get merchantBearsFee => model.getModel("tx").getInt("merchantbearsfee");
-  String get chargeResponseCode =>
-      model.getModel("tx").getString("chargeResponseCode");
-  String get chargeResponseMessage =>
-      model.getModel("tx").getString("chargeResponseMessage");
-  String get authModelUsed => model.getModel("tx").getString("authModelUsed");
-  String get currency => model.getModel("tx").getString("currency");
-  String get ip => model.getModel("tx").getString("IP");
-  String get narration => model.getModel("tx").getString("narration");
-  String get status => model.getModel("tx").getString("status");
-  String get vbvRespMessage => model.getModel("tx").getString("vbvrespmessage");
-  String get authUrl => model.getModel("tx").getString("authurl");
-  String get vbvRespCode => model.getModel("tx").getString("vbvrespcode");
-  String get acctValRespMsg => model.getModel("tx").getString("acctvalrespmsg");
-  String get acctValRespCode =>
-      model.getModel("tx").getString("acctvalrespcode");
+  String get createdAt => model.getString("createdAt");
+  String get updatedAt => model.getString("updatedAt");
+  String get deletedAt => model.getString("deletedAt");
 
-  String get paymentType => model.getModel("tx").getString("paymentType");
-  String get paymentId => model.getModel("tx").getString("paymentId");
-  String get fraudStatus => model.getModel("tx").getString("fraud_status");
-  String get chargeType => model.getModel("tx").getString("charge_type");
-  int get isLive => model.getModel("tx").getInt("is_live");
-  String get createdAt => model.getModel("tx").getString("createdAt");
-  String get updatedAt => model.getModel("tx").getString("updatedAt");
-  String get deletedAt => model.getModel("tx").getString("deletedAt");
+  int get customerId => model.getInt("customerId");
+  int get accountId => model.getInt("AccountId");
 
-  int get customerId => model.getModel("tx").getInt("customerId");
-  int get accountId => model.getModel("tx").getInt("AccountId");
-  RaveCardCustomer get customer =>
-      RaveCardCustomer(model.getModel("tx").getModel("customer"));
+  RaveCardCustomer get customer => RaveCardCustomer(model.getModel("customer"));
+  String get customerToken =>
+      model.getModel("customer").getString("customertoken");
+
   RaveChargeTokens get chargeToken =>
-      RaveChargeTokens(model.getModel("tx").getModel("chargeToken"));
+      RaveChargeTokens(model.getModel("chargeToken"));
 }
 
 class RaveCardCustomer {
@@ -452,9 +440,9 @@ class RavePaymentVerification {
 
   int get txId => model.getInt("txid");
 
-  int get amount => model.getInt("amount");
+  get amount => model.get("amount");
 
-  int get chargedAmount => model.getInt("chargedamount");
+  get chargedAmount => model.get("chargedamount");
 
   int get appFee => model.getInt("appfee");
 

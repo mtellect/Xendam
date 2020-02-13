@@ -120,6 +120,19 @@ const String GENDER = "gender";
 const String BY_ADMIN = "byAdmin";
 const String HAS_RATED = "hasRated";
 const String VISIBILITY = "visibility";
+const String IS_ADMIN = "isAdmin";
+const String ACCOUNT_BALANCES = "accountBalances";
+const String ICON = "icon";
+const String ICON_FONT = "iconFont";
+const String ICON_FONT_PACKAGE = "iconFontPackage";
+const String ICON_DIRECTION = "iconMatchTextDirection";
+const String COLOR = "color";
+const String SHOW_ACCT_BAL = "showAcctBal";
+const String TITLE = "title";
+const String TRANSACTION_REF = "transactionRef";
+const String TO_ACCOUNT = "isDebit";
+const String IS_DEBIT = "isDebit";
+const String TRANSACTION_NARRATION = "transactionNarration";
 
 //Local bases
 const String USER_BASE = "userBase";
@@ -129,6 +142,7 @@ const String ADMIN_BASE = "adminBase";
 const String ADMIN_PATH = "maugost@yourTreeApp.com";
 const String REFERENCE_BASE = "referenceBase";
 const String NOTIFY_BASE = "notifyBase";
+const String TRANSACTION_BASE = "transactionBase";
 
 //FOR ICONS
 /*const*/ String ic_launcher = "assets/images/ic_launcher.png";
@@ -192,7 +206,6 @@ const String THE_MODEL = "theModel";
 const String PARTIES = "parties";
 const String LOGIN_TOKEN = "loginToken";
 const String TOKEN_ID = "tokenID";
-const String TITLE = "title";
 const String FOOTER = "footer";
 const String CONNECTED = "connected";
 const String DESCRIPTION = "description";
@@ -450,7 +463,6 @@ const String IS_ADS = "isAds";
 const String CLICKS = "clicks";
 
 const String NEW_APP = "newApp1";
-const String IS_ADMIN = "isAdmin";
 
 const String CHAT_NOTIFICATION = "chatNotification";
 const String CHAT_ONLINE_STATUS = "chatOnlineStatus";
@@ -525,8 +537,6 @@ const String REJECTED_MESSAGE = "rejectedMessage";
 
 const String READ_ITEMS = "readItems";
 const String RECEIVER_ID = "receiverId";
-const String ICONS = "icons";
-const String COLORS = "colors";
 
 const String DELETED = "deleted";
 const String IS_ONLINE = "isOnline1";

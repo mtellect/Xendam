@@ -1,3 +1,4 @@
+import 'package:credpal/EnterAccess.dart';
 import 'package:credpal/dialogs/baseDialogs.dart';
 import 'package:credpal/main.dart';
 import 'package:flutter/cupertino.dart';
@@ -104,13 +105,27 @@ class _EnterAccountState extends State<EnterAccount> {
   bool otpRetrieved = false;
   String transactionRef;
   RaveBanks bankSelected;
-
   rave.Bank bankChosen;
 
   var bank = TextEditingController();
   var acctNum = TextEditingController();
   var narration = TextEditingController();
   RaveAccountVerification accountInfo;
+
+  String countryCurrency = raveApi.miscellaneous
+      .getSupportedCountries()
+      .singleWhere((element) => element.country == userModel.getString(COUNTRY))
+      .countryCurrency;
+  String countryCode = raveApi.miscellaneous
+      .getSupportedCountries()
+      .singleWhere((element) => element.country == userModel.getString(COUNTRY))
+      .countryCode;
+  String country = raveApi.miscellaneous
+      .getSupportedCountries()
+      .singleWhere((element) => element.country == userModel.getString(COUNTRY))
+      .country;
+
+  final scaffoldKey = GlobalKey<ScaffoldState>();
 
   @override
   void initState() {
@@ -160,6 +175,7 @@ class _EnterAccountState extends State<EnterAccount> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
+      key: scaffoldKey,
       backgroundColor: white,
       appBar: AppBar(
         backgroundColor: white,
@@ -175,9 +191,7 @@ class _EnterAccountState extends State<EnterAccount> {
           Container(
             padding: EdgeInsets.all(10),
             child: FlatButton(
-              onPressed: () {
-                final PayType type = widget.type;
-              },
+              onPressed: createCharge,
               color: APP_COLOR,
               padding: EdgeInsets.all(10),
               shape: RoundedRectangleBorder(
@@ -300,43 +314,86 @@ class _EnterAccountState extends State<EnterAccount> {
                 ),
               ],
             )),
-        addSpace(10),
-        inputField(
-            controller: narration,
-            maxLines: 4,
-            title: "Message ",
-            hint: "Enter a message for this transaction"),
+        if (widget.type != PayType.ADD) ...[
+          addSpace(10),
+          inputField(
+              controller: narration,
+              maxLines: 4,
+              title: "Message ",
+              hint: "Enter a message for this transaction"),
+        ]
       ],
     );
   }
 
-  makeBankTransfer() async {
-    showProgress(true, progressId, context, msg: "Making Transfer...");
+  createCharge() async {
+    final amountToCharge = widget.amountToPull.roundToDouble();
 
-    raveApi.transfers.transferToAfrica(
-        bankName: bankSelected.bankName,
-        accountNumber: accountInfo.accountNumber,
-        recipient: null,
-        amount: widget.amountToPull.toString(),
-        narration: narration.text,
-        currency: "NGN",
-        reference: progressId,
-        beneficiaryName: accountInfo.accountName,
-        destinationBranchCode: bankSelected.bankCode,
-        debitCurrency: "NGN",
-        onComplete: (transfer) {
-          print(transfer.raveModel.items);
-          showProgress(false, progressId, context);
-          showMessage(context, Icons.check, green_dark, "Transfer Successful",
-              transfer.completeMessage, delayInMilli: 900, cancellable: false,
-              onClicked: () {
-            Navigator.pop(context);
+    if (null == bankSelected) {
+      toast(scaffoldKey, "Please select your bank");
+      return;
+    }
+
+    if (acctNum.text.isEmpty) {
+      toast(scaffoldKey, "Please enter your account number");
+      return;
+    }
+
+    if (narration.text.isEmpty && widget.type != PayType.ADD) {
+      toast(scaffoldKey, "Please enter a narration for transaction");
+      return;
+    }
+
+    if (widget.type == PayType.ADD) {
+      showProgress(true, progressId, context, msg: "Requesting OTP...");
+
+      raveApi.charge.initiateBankPayment(
+          bankCode: bankSelected.bankCode,
+          accountNumber: acctNum.text,
+          currency: countryCurrency,
+          country: countryCode,
+          amount: amountToCharge.toString(),
+          email: userModel.getEmail(),
+          phoneNumber: userModel.getEmail(),
+          firstName: userModel.getFullName(),
+          lastName: userModel.getFullName(),
+          txReference: progressId,
+          onComplete: (msg) {
+            showProgress(false, progressId, context);
+            showMessage(context, Icons.check, green, "Payment Successful",
+                "You have successfully funded your wallet account: MSG $msg",
+                delayInMilli: 900, cancellable: true);
+          },
+          onError: (e) {
+            showProgress(false, progressId, context);
+            showMessage(context, Icons.error, red, "Charge Error", e,
+                delayInMilli: 900, cancellable: false);
+          },
+          validatorBuilder: (bool otp, String respMsg, String flwRef) {
+            print("Validate $otp repsonse $respMsg tx $flwRef");
+            showProgress(false, progressId, context);
+            if (otp) enterTransactionOTP(flwRef);
           });
-        },
-        onError: (e) {
-          showProgress(false, progressId, context);
-          showMessage(context, Icons.error, red, "Transfer Error", e,
+    }
+  }
+
+  enterTransactionOTP(String flwRef) async {
+    Future.delayed(Duration(milliseconds: 500), () {
+      pushAndResult(
+          context,
+          EnterAccess(
+            title: "Enter OTP",
+            narration: narration.text,
+            payType: widget.type,
+            flwRef: flwRef,
+          ), result: (String otp) {
+        if (otp.isEmpty) {
+          showMessage(context, Icons.error, red, "Terminated!",
+              "This Transaction was canceled by you.",
               delayInMilli: 900, cancellable: false);
-        });
+          return;
+        }
+      });
+    });
   }
 }

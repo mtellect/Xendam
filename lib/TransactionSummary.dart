@@ -305,7 +305,6 @@ class _TransactionSummaryState extends State<TransactionSummary> {
     if (otpRetrieved) {
       //Charge bank account
       showProgress(true, progressId, context, msg: "Charging Bank...");
-
       raveApi.charge.validatePayment(
           transactionRef: transactionRef,
           otp: otp.text,
@@ -328,7 +327,6 @@ class _TransactionSummaryState extends State<TransactionSummary> {
 
     showProgress(true, progressId, context, msg: "Generating OTP...");
     raveApi.charge.initiateBankPayment(
-        context: context,
         bankCode: bankSelected.bankCode,
         accountNumber: acctNum.text,
         currency: "NGN",
