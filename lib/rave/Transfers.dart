@@ -40,7 +40,8 @@ class Transfers {
       "seckey": secKey,
       "narration": narration,
       "currency": currency,
-      "reference": reference,
+      if (null != recipient)
+        "reference": reference,
       //"beneficiary_name": beneficiaryName
     };
 
@@ -115,16 +116,13 @@ class Transfers {
       return onError("Failed to connect to internet");
     }
 
-    post(url, body: jsonEncode(body), headers: headers)
-        .then((value) {
+    post(url, body: jsonEncode(body), headers: headers).then((value) {
       RaveRequest(value).validateRequest(
           onSuccessful: (msg, data) {
             return onComplete(RaveTransfer(RaveModel(items: data)));
           },
           onError: onError);
-        }).catchError(onError);
-
-
+    }).catchError(onError);
   }
 
   transferToMpesaMobile(
@@ -165,8 +163,6 @@ class Transfers {
           },
           onError: onError);
     }).catchError(onError);
-
-
   }
 
   transferToGhanaMobile(
@@ -535,8 +531,8 @@ class RaveTransfer {
   String get fullName => raveModel.getString("fullname");
   String get dateCreated => raveModel.getString("date_created");
   String get currency => raveModel.getString("currency");
-  int get amount => raveModel.getInt("amount");
-  int get fee => raveModel.getInt("fee");
+  get amount => raveModel.get("amount");
+  get fee => raveModel.get("fee");
   String get status => raveModel.getString("status");
   String get reference => raveModel.getString("reference");
   String get narration => raveModel.getString("narration");
@@ -605,8 +601,8 @@ class RaveTransferBalance {
   int get walletId => raveModel.getInt(WALLET_ID);
   String get shortName => raveModel.getString(SHORT_NAME);
   String get walletNumber => raveModel.getString(WALLET_NUMBER);
-  int get availableBalance => raveModel.getInt(AVAILABLE_BALANCE);
-  int get ledgerBalance => raveModel.getInt(LEDGER_BALANCE);
+  get availableBalance => raveModel.get(AVAILABLE_BALANCE);
+  get ledgerBalance => raveModel.get(LEDGER_BALANCE);
 }
 
 class RaveAccountVerification {

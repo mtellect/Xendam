@@ -93,6 +93,11 @@ class _EnterAccessState extends State<EnterAccess> {
                       chargeWithBank(accessCode, widget.flwRef);
                       return;
                     }
+
+                    if (widget.payType == PayType.SEND) {
+                      chargeWithBank(accessCode, widget.flwRef);
+                      return;
+                    }
                   },
                   color: orang0,
                   padding: EdgeInsets.all(10),

@@ -1,3 +1,4 @@
+import 'package:common_utils/common_utils.dart';
 import 'package:credpal/EnterAccess.dart';
 import 'package:credpal/dialogs/baseDialogs.dart';
 import 'package:credpal/main.dart';
@@ -111,6 +112,8 @@ class _EnterAccountState extends State<EnterAccount> {
   var acctNum = TextEditingController();
   var narration = TextEditingController();
   RaveAccountVerification accountInfo;
+
+  double get amountToCharge => widget.amountToPull.roundToDouble();
 
   String countryCurrency = raveApi.miscellaneous
       .getSupportedCountries()
@@ -363,8 +366,6 @@ class _EnterAccountState extends State<EnterAccount> {
   }
 
   createCharge() async {
-    final amountToCharge = widget.amountToPull.roundToDouble();
-
     if (null == bankSelected) {
       toast(scaffoldKey, "Please select your bank");
       return;
@@ -381,36 +382,87 @@ class _EnterAccountState extends State<EnterAccount> {
     }
 
     if (widget.type == PayType.ADD) {
-      showProgress(true, progressId, context, msg: "Requesting OTP...");
-
-      raveApi.charge.initiateBankPayment(
-          bankCode: bankSelected.bankCode,
-          accountNumber: acctNum.text,
-          currency: countryCurrency,
-          country: countryCode,
-          amount: amountToCharge.toString(),
-          email: userModel.getEmail(),
-          phoneNumber: userModel.getEmail(),
-          firstName: userModel.getFullName(),
-          lastName: userModel.getFullName(),
-          txReference: progressId,
-          onComplete: (msg) {
-            showProgress(false, progressId, context);
-            showMessage(context, Icons.check, green, "Payment Successful",
-                "You have successfully funded your wallet account: MSG $msg",
-                delayInMilli: 900, cancellable: true);
-          },
-          onError: (e) {
-            showProgress(false, progressId, context);
-            showMessage(context, Icons.error, red, "Charge Error", e,
-                delayInMilli: 900, cancellable: false);
-          },
-          validatorBuilder: (bool otp, String respMsg, String flwRef) {
-            print("Validate $otp repsonse $respMsg tx $flwRef");
-            showProgress(false, progressId, context);
-            if (otp) enterTransactionOTP(flwRef);
-          });
+      chargeBankAccount();
+      return;
     }
+
+    checkAdminBalance(canTransfer: () {
+      transferFundsTo();
+    });
+  }
+
+  checkAdminBalance({canTransfer}) async {
+    showProgress(true, progressId, context, msg: "Initiating Transfer...");
+
+    raveApi.transfers.walletTransferBalance(
+        currency: countryCurrency,
+        onComplete: (balance) {
+          final adminBalance = balance.availableBalance;
+          bool needsTopUp = NumUtil.greaterThan(amountToCharge, adminBalance);
+
+          if (needsTopUp) {
+            showProgress(false, progressId, context);
+            showMessage(context, Icons.error, red, "Cannot Transact",
+                "Transaction cannot be processed at this time please contact admin...",
+                delayInMilli: 900, cancellable: false);
+            return;
+          }
+          if (null == canTransfer) return;
+          canTransfer();
+        },
+        onError: onError);
+  }
+
+  transferFundsTo() async {
+    raveApi.transfers.transferToAfrica(
+        bankName: bankSelected.bankName,
+        accountNumber: accountInfo.accountNumber,
+        recipient: null,
+        amount: amountToCharge.toString(),
+        narration: narration.text,
+        currency: countryCurrency,
+        reference: progressId,
+        beneficiaryName: accountInfo.accountName,
+        destinationBranchCode: bankSelected.bankCode,
+        debitCurrency: countryCurrency,
+        onComplete: (transfer) {
+          //showProgress(false, progressId, context);
+          //print(transfer.raveModel.items);
+          //return;
+          saveTransaction(null, transfer);
+        },
+        onError: onError);
+  }
+
+  chargeBankAccount() async {
+    showProgress(true, progressId, context, msg: "Requesting OTP...");
+    raveApi.charge.initiateBankPayment(
+        bankCode: bankSelected.bankCode,
+        accountNumber: acctNum.text,
+        currency: countryCurrency,
+        country: countryCode,
+        amount: amountToCharge.toString(),
+        email: userModel.getEmail(),
+        phoneNumber: userModel.getEmail(),
+        firstName: userModel.getFullName(),
+        lastName: userModel.getFullName(),
+        txReference: progressId,
+        onComplete: (msg) {
+          showProgress(false, progressId, context);
+          showMessage(context, Icons.check, green, "Payment Successful",
+              "You have successfully funded your wallet account: MSG $msg",
+              delayInMilli: 900, cancellable: true);
+        },
+        onError: (e) {
+          showProgress(false, progressId, context);
+          showMessage(context, Icons.error, red, "Charge Error", e,
+              delayInMilli: 900, cancellable: false);
+        },
+        validatorBuilder: (bool otp, String respMsg, String flwRef) {
+          print("Validate $otp repsonse $respMsg tx $flwRef");
+          showProgress(false, progressId, context);
+          if (otp) enterTransactionOTP(flwRef);
+        });
   }
 
   enterTransactionOTP(String flwRef) async {
@@ -429,6 +481,49 @@ class _EnterAccountState extends State<EnterAccount> {
               delayInMilli: 900, cancellable: false);
           return;
         }
+      });
+    });
+  }
+
+  void saveTransaction(RavePaymentVerification resp, RaveTransfer transfer) {
+    String txRef = null == resp ? (transfer.reference) : resp.txRef;
+    double amount = amountToCharge;
+
+    final transMap = Transactions(
+            transactionRef: txRef,
+            toAccount: "Xendam wallet debited",
+            narration:
+                "You have made a transfer to ${accountInfo.accountName} from your wallet",
+            amount: amount,
+            isDebit: true,
+            date: DateTime.now())
+        .toModel();
+
+    BaseModel transModel = BaseModel(items: transMap);
+    transModel.saveItem(TRANSACTION_BASE, true, document: txRef,
+        onComplete: () {
+      showProgress(false, progressId, context);
+
+      int savingsPos = acctBalances
+          .indexWhere((element) => element.title == "Total Savings");
+
+      int transferPos = acctBalances
+          .indexWhere((element) => element.title == "Total Transfers");
+
+      acctBalances[savingsPos].amount =
+          acctBalances[savingsPos].amount - amount.toDouble();
+
+      acctBalances[transferPos].amount =
+          acctBalances[transferPos].amount + amount.toDouble();
+
+      userModel
+        ..put(ACCOUNT_BALANCES, acctBalances.map((e) => e.toModel()).toList())
+        ..updateItems();
+
+      showMessage(context, Icons.check, green_dark, "Transaction Successful",
+          "Your transfer to ${accountInfo.accountName} was successful.",
+          delayInMilli: 900, cancellable: false, onClicked: (_) {
+        Navigator.of(context).popUntil((route) => route.isFirst);
       });
     });
   }

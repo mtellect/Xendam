@@ -143,7 +143,9 @@ class BaseModel {
 
   double getDouble(String key) {
     Object value = items[key];
-    return value == null || !(value is double) ? 0 : value;
+    return value == null || !(value is num)
+        ? 0.0
+        : num.parse("$value").toDouble();
   }
 
   int getTime() {

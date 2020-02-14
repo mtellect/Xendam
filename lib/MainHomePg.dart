@@ -79,8 +79,6 @@ class _MainHomePgState extends State<MainHomePg> {
 
       BaseModel model = BaseModel(doc: changes.document);
 
-      bool groupPost = model.getBoolean(IS_GROUP);
-      if (groupPost) continue;
       int p = mainTransactions
           .indexWhere((bm) => bm.getObjectId() == model.getObjectId());
       bool exists = p != -1;
@@ -109,11 +107,25 @@ class _MainHomePgState extends State<MainHomePg> {
               .toList();
         });
     }
+    if (mounted)
+      setState(() {
+        transactionsLoaded = true;
+        recentTransactions = mainTransactions
+            .map((e) => Transactions(
+                toAccount: e.getString(TO_ACCOUNT),
+                transactionRef: e.getString(TRANSACTION_REF),
+                narration: e.getString(TRANSACTION_NARRATION),
+                amount: e.getDouble(AMOUNT),
+                isDebit: e.getBoolean(IS_DEBIT),
+                date: DateTime.fromMillisecondsSinceEpoch(e.get(TIME))))
+            .toList();
+      });
   }
 
   loadAccountBalances() {
     acctBalances = userModel.getList(ACCOUNT_BALANCES).map((e) {
       BaseModel bm = BaseModel(items: e);
+
       return AccountBalance(
           title: bm.getString(TITLE),
           amount: bm.getDouble(AMOUNT),
